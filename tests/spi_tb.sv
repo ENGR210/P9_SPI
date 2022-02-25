@@ -39,7 +39,7 @@ task sendByte (
     output logic [7:0] rx_data
     );
     $display("SPI Send:  %h", tx_data);
-    for (int i = 0; i < 8; ++i) begin
+    for (int i = 7; i >= 0; --i) begin
         mosi = tx_data[i];
         `SPI_DELAY;
         @(posedge clk) #1;

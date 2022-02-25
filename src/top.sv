@@ -20,14 +20,27 @@ logic sck;
 logic mosi;
 logic ss;
 
+(* mark_debug = "true" *) logic sck_;
+(* mark_debug = "true" *) logic ss_;
+(* mark_debug = "true" *) logic mosi_;
+(* mark_debug = "true" *) logic miso;
+
+//logic sck_;
+//logic ss_;
+//logic mosi_;
+//logic miso;
+
 assign clk  = CLK100MHZ;
 assign rst  = btnC;
 assign sck  = JC[6]; //Sch JC9
-assign mosi = JC[4]; //Sch JC7
-assign JC[5]= miso;  //Sch JC8
-assign ss   = JC[7]; //Sch JC10
+assign mosi = JC[5]; //Sch JC8
+assign JC[4]= miso;  //Sch JC7
+assign ss   = 'h0; //JC[7]; //Sch JC10
 
-assign JC[3:0] = 'h0;
+assign JC[0] = miso;
+assign JC[1] = mosi_;
+assign JC[2] = sck_;
+assign JC[3] = ss_;
 
 debounce db_sclk(
     .clk,

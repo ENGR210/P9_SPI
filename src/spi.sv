@@ -13,25 +13,32 @@ module spi(
     //hw interface
     input        [7:0]  dout, //output to SPI
     output logic [7:0]  din,  //input from SPI
-    output logic        done
 );
     
     logic rst_; //local reset
 
-    //This creates a local reset
+
+    //combine the chip and SPI resets 
     assign rst_ = rst | ss;
-    //This puts MISO into a HighImpedance state when in reset 
-    assign miso = ( rst_ ? 'hz : dout['h0] ); //update only dout
+
+    //replace this with actual logic
+    logic fixme; 
+    assign fixme = 'h0;
+
+    //tri-state miso when not in use.  
+    // keep this line
+    assign miso = ( rst_ ? 'hz : fixme );
 
     always_ff @(posedge clk) begin
         if (rst_) begin
-            ; //update me
-        end else begin
-            ; //update me
-        end
+            ; //finish me
+       end else begin
+            ; //finish me
+       end
+    end
+    
+    always_comb begin
+        ; //finish me
     end
 
-    assign din = 'h0; //update me
-    assign done = 'h0; //update me
-    
 endmodule
