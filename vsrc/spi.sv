@@ -13,6 +13,7 @@ module spi(
     //hw interface
     input        [7:0]  dout, //output to SPI
     output logic [7:0]  din,  //input from SPI
+    output logic        done //logical 1 for 1 cycle indicating new data 
 );
     
     logic rst_; //local reset
