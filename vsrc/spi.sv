@@ -8,7 +8,7 @@ module spi(
     input               sck, 
     input               ss,  //acts like reset
     input               mosi, 
-    output              miso, 
+    output logic        miso, 
 
     //hw interface
     input        [7:0]  dout, //output to SPI
