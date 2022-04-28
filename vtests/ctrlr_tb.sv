@@ -47,6 +47,25 @@ task txRxByte(
     new_data = 'h0;
 endtask: txRxByte 
 
+task test_new_data();
+    @(posedge clk) #2;
+    new_data = 'h0;     
+    
+    $display("Checking new_data by incorrectly writing to LEDs ");
+    assert( leds == 'h0) else $fatal(1, "bad initial condition for leds: expect:%h got:%h", 16'h0, leds);
+    @(posedge clk) #2 din = 'h03;
+    repeat (2) 
+        @(posedge clk) #2 ;
+    @(posedge clk) #2 din = 'hff;
+    repeat (2) 
+        @(posedge clk) #2 ;
+    assert( leds == 'h0000) else $fatal(1, "new_data not set, write should not be valid: expect:%h got:%h.",
+                        16'h0000, leds); 
+    din = 'h0;                           
+    repeat(2) 
+        @(posedge clk) #2 ;
+endtask: test_new_data
+
 task test_chip_id ();
     automatic logic [7:0] rx_byte;
     localparam chip_id = 8'h07;
@@ -106,7 +125,9 @@ initial begin
     rst = 'h0;
 
     repeat(10) @(posedge clk) #2;
-
+    
+    test_new_data();
+    
     test_chip_id();
     test_switches();
     test_leds();
