@@ -38,18 +38,41 @@ task sendByte (
     input logic [7:0] tx_data,
     output logic [7:0] rx_data
     );
+    integer doneCnt = 0;
     $display("SPI Send:  %h", tx_data);
-    for (int i = 7; i >= 0; --i) begin
-        mosi = tx_data[i];
-        `SPI_DELAY;
-        @(posedge clk) #1;
-        sck = 'h1;
-        rx_data[i] = miso;
-        `SPI_DELAY;
-        @(posedge clk) #1;
-        sck = 'h0;        
-        assert (done == 0) else $fatal(1, "bad done: expect:0 got: %h", done);  
-    end
+    fork
+    
+        //this thread looks for done = 1 at some point during the SPI tranmission
+        begin 
+            while (1) begin
+                @(posedge clk) #1
+                    if ((done == 1) && (doneCnt == 0))
+                        doneCnt = 1; 
+            end               
+        end
+    
+        // this thread runs the SPI transmission
+        begin // this thread runs the SPI transmission
+            for (int i = 7; i >= 0; --i) begin
+                mosi = tx_data[i];
+                `SPI_DELAY;
+                @(posedge clk) #1;
+                sck = 'h1;
+                rx_data[i] = miso;
+                `SPI_DELAY;
+                @(posedge clk) #1;
+                sck = 'h0;        
+                assert (done == 0) else $fatal(1, "bad done: expect:0 got: %h", done);  
+            end
+            //add a delay for done to go high
+            for (int i = 0; i < 100; ++i) begin
+                @(posedge clk) #1;
+            end                
+        end 
+    
+    join_any
+    
+    assert(doneCnt == 1) else $fatal(1, "done never went high");
     
     //done turns out to be hard to test
     //across various student implimentations   
