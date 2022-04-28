@@ -45,7 +45,7 @@ task sendByte (
         //after the SPI transmission
         begin 
             for (int i = 0; i < 1e3; i++) begin
-                @(posedge clk) #1
+                @(posedge clk) 
                 if (done == 1) 
                     break;
             end
