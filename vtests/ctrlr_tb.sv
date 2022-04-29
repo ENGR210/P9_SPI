@@ -39,12 +39,20 @@ task txRxByte(
     output logic [7:0] rx_byte
     );
 
+    //dout is what will get transmitted via SPI. 
+    // this occurs BEFORE the actual SPI transmission
+    //hence we sample it here.
+    rx_byte = dout;    
     @(posedge clk) #2;
+    //now send in a new byte
     din = tx_byte;
-    new_data = 'h1;
+    new_data = 'h1;     
     @(posedge clk) #2;
-    rx_byte = dout;
     new_data = 'h0;
+    
+    //and wait a few cycles for good measure
+    repeat(2) @(posedge clk) #2;
+    
 endtask: txRxByte 
 
 task test_new_data();
@@ -59,7 +67,7 @@ task test_new_data();
     @(posedge clk) #2 din = 'hff;
     repeat (2) 
         @(posedge clk) #2 ;
-    assert( leds == 'h0000) else $fatal(1, "new_data not set, write should not be valid: expect:%h got:%h.",
+    assert( leds == 'h0000) else $fatal(1, "new_data not set, write should not be valid: LEDs expect:%h got:%h.",
                         16'h0000, leds); 
     din = 'h0;                           
     repeat(2) 
