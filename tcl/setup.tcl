@@ -37,4 +37,4 @@ add_files -fileset constrs_1 ${XDCDIR}/Basys3_Master.xdc
 set_property file_type SystemVerilog [get_files *.sv]
 
 #make sims run longer by default
-set_property -name {xsim.simulate.runtime} -value {1000us} -objects [get_filesets sim_ctrlr]
+set_property -name {xsim.simulate.runtime} -value {1000us} -objects [get_filesets sim_*]
