@@ -10,9 +10,9 @@ logic sck;
 logic ss;
 logic mosi;
 logic miso;
-logic [7:0] dout;
 logic [7:0] din;
-logic done;
+logic [7:0] dout;
+logic busy;
 
 spi DUT (
     .clk,
@@ -21,9 +21,9 @@ spi DUT (
     .ss,
     .mosi,
     .miso,
-    .dout,
     .din,
-    .done
+    .dout,
+    .busy
 );
 
 always #10 clk = ~clk;
@@ -31,28 +31,18 @@ always #10 clk = ~clk;
 task initialize ();
     clk = 'h0; rst = 'h1; 
     sck = 'h0; ss = 'h1; mosi = 'h0;
-    dout = 'h0;
+    din = 'h0;
 endtask: initialize
 
 task sendByte (
     input logic [7:0] tx_data,
     output logic [7:0] rx_data
     );
-    $display("SPI Send:  %h", tx_data);
+    $display("@PI:  Send:  %h", tx_data);
+
+    assert (busy == 0) else $fatal(1, "busy high before SPI transmission start");
+
     fork
-    
-        //this thread looks for done = 1 at some point 
-        //after the SPI transmission
-        begin 
-            for (int i = 0; i < 1e3; i++) begin
-                @(posedge clk) 
-                if (done == 1) 
-                    break;
-            end
-            assert( done == 1) else $fatal(1, "done never went high");
-                                       
-        end
-    
         // this thread runs the SPI transmission
         begin // this thread runs the SPI transmission
             for (int i = 7; i >= 0; --i) begin
@@ -64,35 +54,45 @@ task sendByte (
                 `SPI_DELAY;
                 @(posedge clk) #1;
                 sck = 'h0;        
-                assert (done == 0) else $fatal(1, "bad done: expect:0 got: %h", done);  
+                //assert (done == 0) else $fatal(1, "bad done: expect:0 got: %h", done);  
             end
-              
         end 
     
-    join
-        
-    //done turns out to be hard to test
-    //across various student implimentations   
-    //@(posedge clk) #1;
-    //assert (done == 1) else $fatal(1, "bad done: expect:1 got: %h", done);
-    
+
+        //this thread monitors busy 
+        begin
+            @(posedge sck) #1; //wait for SCK to go high
+            @(posedge clk) #1; //then give it another clock cycle
+            assert(busy == 1) else $fatal(1, "busy should be high during SPI transmission");
+            repeat (8) begin //wait for 8 more falling edge of SCK
+                @(negedge sck) #1;
+                assert(busy == 1) else $fatal(1, "busy should stay high during SPI transmission");
+            end 
+            @(posedge clk) #1;
+            assert(busy == 0) else $fatal(1, "busy should go low after SPI transmission");
+            @(posedge clk) #1;
+            assert(busy == 0) else $fatal(1, "busy should stay low after SPI transmission");
+        end
+   
+        join
+
     `SPI_DELAY;
     
-    $display("SPI Recv:  %h", rx_data);
+    $display("@PI: Recv:  %h", rx_data);
 endtask: sendByte
 
 task setByte(
     input logic [7:0] tx_data
     );
-    $display("@slave:  setting byte: %h", tx_data);
-    dout = tx_data;
+    $display("@Basys:  setting byte: %h", tx_data);
+    din = tx_data;
 endtask: setByte
 
 task checkByte (
     input logic [7:0] rx_data
     );
-    $display("@slave: checking byte: %h", rx_data);
-    assert( din == rx_data) else $fatal(1, "BAD byte: %h", din);
+    $display("@Basys: checking byte: %h", rx_data);
+    assert( dout == rx_data) else $fatal(1, "BAD byte: %h", dout);
 endtask: checkByte
 
 initial begin
