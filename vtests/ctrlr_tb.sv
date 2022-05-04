@@ -10,7 +10,7 @@ logic [15:0]    switches;
 logic [15:0]    leds;
 
     //MMIO interface 
-logic           new_data;
+logic           dvalid;
 logic [7:0]     din;
 logic [7:0]     dout;
 
@@ -19,7 +19,7 @@ ctrlr DUT (
     .rst,
     .switches,
     .leds,
-    .new_data,
+    .dvalid,
     .din,
     .dout
     );
@@ -29,7 +29,7 @@ always #10 clk = ~clk;
 task initialize ();
     clk = 'h0; rst = 'h1;
     switches = 'h0; 
-    new_data ='h0;
+    dvalid ='h1;
     din = 'h0;
     #1 ;   
 endtask
@@ -43,23 +43,26 @@ task txRxByte(
     // this occurs BEFORE the actual SPI transmission
     //hence we sample it here.
     rx_byte = dout;    
-    @(posedge clk) #2;
+    @(posedge clk) #1;
+    dvalid = 'h0; // SPI starts
+    repeat(11) @(posedge clk) #1;
+
     //now send in a new byte
     din = tx_byte;
-    new_data = 'h1;     
-    @(posedge clk) #2;
-    new_data = 'h0;
+    dvalid = 'h1;     
+
+    @(posedge clk) #1;
     
     //and wait a few cycles for good measure
     repeat(2) @(posedge clk) #2;
     
 endtask: txRxByte 
 
-task test_new_data();
+task test_dvalid();
     @(posedge clk) #2;
-    new_data = 'h0;     
+    dvalid = 'h0;     
     
-    $display("Checking new_data by incorrectly writing to LEDs ");
+    $display("Checking dvalid by incorrectly writing to LEDs ");
     assert( leds == 'h0) else $fatal(1, "bad initial condition for leds: expect:%h got:%h", 16'h0, leds);
     @(posedge clk) #2 din = 'h03;
     repeat (2) 
@@ -67,12 +70,12 @@ task test_new_data();
     @(posedge clk) #2 din = 'hff;
     repeat (2) 
         @(posedge clk) #2 ;
-    assert( leds == 'h0000) else $fatal(1, "new_data not set, write should not be valid: LEDs expect:%h got:%h.",
+    assert( leds == 'h0000) else $fatal(1, "dvalid not set, write should not be valid: LEDs expect:%h got:%h.",
                         16'h0000, leds); 
     din = 'h0;                           
     repeat(2) 
         @(posedge clk) #2 ;
-endtask: test_new_data
+endtask: test_dvalid
 
 task test_chip_id ();
     automatic logic [7:0] rx_byte;
@@ -134,7 +137,7 @@ initial begin
 
     repeat(10) @(posedge clk) #2;
     
-    test_new_data();
+    test_dvalid();
     
     test_chip_id();
     test_switches();

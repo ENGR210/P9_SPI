@@ -62,8 +62,8 @@ debounce db_mosi(
 //recieved byte from SPI and 
 //sends it back out next time
 logic [7:0] din;
-logic       done;
 logic [7:0] dout;
+logic       busy;
 
 spi spi0(
     .clk,
@@ -74,9 +74,9 @@ spi spi0(
     .mosi(mosi_),
     .miso(miso),
     
-    .dout,
     .din,
-    .done
+    .dout,
+    .busy
     );
 
 ctrlr ctrlr0(
@@ -85,9 +85,9 @@ ctrlr ctrlr0(
     .switches(sw),
     .leds(LED),
     
-    .new_data(done),
-    .din,
-    .dout
+    .dvalid(~busy),
+    .din(dout),
+    .dout(din)
 );
 
 endmodule

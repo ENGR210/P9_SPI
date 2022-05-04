@@ -4,42 +4,53 @@ module spi(
     input               clk, 
     input               rst, 
     
-    //SPI signals
-    input               sck, 
-    input               ss,  //acts like reset
-    input               mosi, 
-    output logic        miso, 
+    //SPI interface 
+    // Signals to/from the Raspberry Pi
+    input               sck, //Serial Clock
+    input               ss,  //Serial Reset Not
+    input               mosi, //Serial input from Pi
+    output              miso, //Serial output to Pi
 
-    //hw interface
-    input        [7:0]  dout, //output to SPI
-    output logic [7:0]  din,  //input from SPI
-    output logic        done //logical 1 for 1 cycle indicating new data 
+    //
+    //Hardware interface
+    //Signals to/from the rest of the Basys3
+    //
+
+    // this is the parallel input from the Basys3
+    // it's what gets sent out over the SPI on the next
+    // transaction
+    input        [7:0]  din, 
+
+    //this is the parallel output to the Basys3
+    // it's what was recieved from SPI over the last
+    // transaction
+    output logic [7:0]  dout,
+
+    //this tells the Basys3 that a SPI transaction is ongoing. 
+    // it should go high at the FIRST rising edge of a SPI transaction
+    // and stay high until the LAST falling edge of the SPI transaction
+    output logic        busy 
 );
     
     logic rst_; //local reset
-
-
-    //combine the chip and SPI resets 
+    logic last; //previous SCK
     assign rst_ = rst | ss;
 
-    //replace this with actual logic
-    logic fixme; 
-    assign fixme = 'h0;
-
-    //tri-state miso when not in use.  
-    // keep this line
-    assign miso = ( rst_ ? 'hz : fixme );
+    //fixme:  'h0 is wrong!
+    assign miso = ( rst_ ? 'hz : 'h0 ); 
 
     always_ff @(posedge clk) begin
         if (rst_) begin
-            ; //finish me
-       end else begin
-            ; //finish me
-       end
-    end
-    
-    always_comb begin
-        ; //finish me
+            last <= 'h0;
+            ; //fixme!
+        end else begin
+            last <= sck;
+            ; //fixme!
+        end
     end
 
+    always_comb begin
+        ; //fixme
+    end
+    
 endmodule
